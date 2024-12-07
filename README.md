@@ -4,9 +4,11 @@
 
 
 # Mental Health and Education: Exploring the Connection
-## Our Dashboard
+## Dashboard
 
 URL: [Dashboard](https://dashboard-esm.streamlit.app/)
+
+Git repository for the dashboard:[Repo-Dashboard](https://github.com/KevinMundo11/dashboard_maqueta)
 
 ## Introduction
 
