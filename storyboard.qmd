@@ -1,0 +1,307 @@
+---
+title: "Narrativa de la historia"
+jupyter: python3
+---
+
+## Exposición del problema
+
+La salud mental y la educación son dos pilares fundamentales para el desarrollo de las personas y las comunidades. Sin embargo, estas áreas son comúnmente tratadas por separado. Este análisis busca explorar la conexión entre ambas, utilizando datos representativos de México para responder preguntas críticas:
+
+-   ¿Cómo influye la salud mental en los niveles de alfabetización?
+
+-   ¿Existen diferencias generacionales en la disposición para hablar de salud mental?
+
+-   ¿Qué factores externos, como el alcoholismo o tabaquismo, podrían impactar la alfabetización?
+
+## Datos
+
+Para abordar estas preguntas, se analizaron las encuestas [ENIGH](https://www.inegi.org.mx/datosabiertos/) y [ENSANUT](https://ensanut.insp.mx/) de 2018, 2020 y 2022. Los datos fueron agrupados por generaciones, basándose en diciembre de 2024:
+
+-   **Z:** 10-19 años.
+
+-   **Milenial:** 20-35 años.
+
+-   **X:** 36-51 años.
+
+-   **Baby Boomer:** 52-70 años.
+
+-   **Silent:** 71-91 años.
+
+-   **Greatest:** 92 años en adelante.
+
+Las variables clave incluyen:
+
+-   Alfabetización (ENIGH).
+
+-   Indicadores de salud mental, como tristeza, depresión y tendencias suicidas (ENSANUT).
+
+-   Hábitos relacionados con alcoholismo y tabaquismo (ENSANUT).
+
+## Resultados
+
+El análisis reveló que algunos supuestos iniciales fueron desafiados por los datos:
+
+1.  **Disposición a hablar sobre salud mental:**\
+    Las generaciones Silent y Greatest (70 años en adelante) mostraron una mayor proporción de respuestas indicando tristeza o depresión en comparación con las generaciones más jóvenes. Esto contradice la idea de que los adultos mayores son más reservados para hablar de su salud mental.
+
+    En contraste, las generaciones Milenial y Z presentaron un porcentaje ligeramente mayor de intentos de suicidio reportados. Un mapa interactivo ilustró cómo esta tendencia varió geográficamente, destacando un aumento en los estados con promedios altos de intentos de suicidio entre 2018 y 2022, posiblemente influido por la pandemia.
+
+    ```{python}
+    #| echo: false
+    #| fig-align: center
+    import os
+    import pandas as pd
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    import geopandas as gpd
+    import numpy as np
+    import plotly.graph_objects as go
+    import matplotlib.cm as cm
+    import matplotlib.colors as mcolors
+    from plotly.subplots import make_subplots
+    # Cargar datos principales
+    df_1 = pd.read_parquet('data/ensanut_processed.parquet')
+    df_1['Sexo'] = df_1['Sexo'].astype('category')
+    df_1['C_Entidad'] = df_1['C_Entidad'].astype('category')
+    df_1['Fecha'] = pd.to_datetime(df_1['Fecha'], errors='coerce')
+    df_1['Año'] = df_1['Fecha'].dt.year
+    df_1 = df_1.dropna(subset=['Edad']).reset_index(drop=True)
+    df_1['Edad'] = df_1['Edad'].astype('int')
+    df_1['Generacion'] = df_1['Generacion'].astype('category')
+    df_1['Atentar_contras_si'] = df_1['Atentar_contras_si'].cat.remove_unused_categories()
+    df_2 = pd.read_parquet('data/enigh_processed.parquet')
+    df_2['Sexo'] = df_2['Sexo'].astype('category')
+    df_2['Alfabetismo'] = df_2['Alfabetismo'].astype('category')
+    df_2['C_Entidad'] = df_2['C_Entidad'].astype('category')
+    df_2['Fecha'] = pd.to_datetime(df_2['Fecha'], format='%Y')
+    df_2['Año'] = df_2['Fecha'].dt.year
+    df_2['Generacion'] = df_2['Generacion'].astype('category')
+    df_2 = df_2[df_2['Edad'] > 9].reset_index(drop=True)
+    df_2['Generacion'] = df_2['Generacion'].cat.remove_unused_categories()
+
+
+    # Cargar shapefile de México
+    mexico_map = gpd.read_file('data/2023_1_00_ENT.shp')
+    mexico_map = mexico_map.rename(columns={'NOMGEO': 'Entidad'})
+
+    # Diccionario de correspondencias
+    correspondencias = {
+        'AGUASCALIENTES': 'Aguascalientes',
+        'BAJA CALIFORNIA': 'Baja California',
+        'BAJA CALIFORNIA SUR': 'Baja California Sur',
+        'CAMPECHE': 'Campeche',
+        'COAHUILA DE ZARAGOZA': 'Coahuila de Zaragoza',
+        'COLIMA': 'Colima',
+        'CHIAPAS': 'Chiapas',
+        'CHIHUAHUA': 'Chihuahua',
+        'CIUDAD DE MÉXICO': 'Ciudad de México',
+        'DURANGO': 'Durango',
+        'GUANAJUATO': 'Guanajuato',
+        'GUERRERO': 'Guerrero',
+        'HIDALGO': 'Hidalgo',
+        'JALISCO': 'Jalisco',
+        'MÉXICO': 'México',
+        'MICHOACÁN DE OCAMPO': 'Michoacán de Ocampo',
+        'MORELOS': 'Morelos',
+        'NAYARIT': 'Nayarit',
+        'NUEVO LEÓN': 'Nuevo León',
+        'OAXACA': 'Oaxaca',
+        'PUEBLA': 'Puebla',
+        'QUERÉTARO': 'Querétaro',
+        'QUINTANA ROO': 'Quintana Roo',
+        'SAN LUIS POTOSÍ': 'San Luis Potosí',
+        'SINALOA': 'Sinaloa',
+        'SONORA': 'Sonora',
+        'TABASCO': 'Tabasco',
+        'TAMAULIPAS': 'Tamaulipas',
+        'TLAXCALA': 'Tlaxcala',
+        'VERACRUZ DE IGNACIO DE LA LLAVE': 'Veracruz de Ignacio de la Llave',
+        'YUCATÁN': 'Yucatán',
+        'ZACATECAS': 'Zacatecas'
+    }
+    df_1['Entidad'] = df_1['Entidad'].replace(correspondencias)
+    df_2['Entidad'] = df_2['Entidad'].replace(correspondencias)
+    mexico_map['Entidad'] = mexico_map['Entidad'].replace(correspondencias)
+
+    # Filtrar por Generación Z y Milenial
+    df_1_filtered = df_1[df_1['Generacion'].isin(['Z', 'Milenial'])]
+
+    # Filtrar los datos para el año 2022
+    anio = 2022
+    data_anio = df_1_filtered[(df_1_filtered['Año'] == anio) & (df_1_filtered['Atentar_contras_si'].notna())]
+
+    # Calcular el porcentaje de respuesta "1" para cada entidad
+    percentages_1 = data_anio[data_anio['Atentar_contras_si'] == '1'] \
+        .groupby('Entidad').size()
+
+    totales = data_anio.groupby('Entidad').size()
+
+    # Manejar casos con división por cero
+    percentages_1 = (percentages_1 / totales) * 100
+    percentages_1 = percentages_1.fillna(0).reset_index()
+    percentages_1.columns = ['Entidad', 'Porcentaje_1']
+
+    # Realizar la combinación entre el shapefile y los datos de porcentaje
+    mexico_data_sample = mexico_map.merge(percentages_1, on='Entidad', how='left')
+
+    # Convertir mexico_data_sample en un GeoDataFrame
+    mexico_data_sample = gpd.GeoDataFrame(mexico_data_sample, geometry='geometry')
+
+    # Crear la figura
+    fig, ax = plt.subplots(figsize=(6, 6))
+
+    # Generar el mapa, coloreando según la columna 'Porcentaje_1'
+    mexico_data_sample.plot(
+        column='Porcentaje_1', 
+        cmap='viridis', 
+        legend=True,
+        legend_kwds={'orientation': "horizontal"},
+        missing_kwds={"color": "lightgrey"},
+        ax=ax
+    )
+
+    # Añadir título y otros detalles al mapa
+    plt.title(f"Porcentaje de respuesta positiva a intento de quitarse la vida\n(Z y Milenial) - Año {anio}")
+    ax.set_axis_off()
+
+    # Mostrar el mapa
+    plt.show()
+    ```
+
+2.  **Impacto del alcoholismo en la alfabetización:**\
+    No se encontró una relación directa entre los hábitos de consumo de alcohol y el nivel de alfabetización. Los mapas mostraron que los estados con mayor consumo de alcohol no coinciden con aquellos con menores niveles de alfabetización(incluso, parecieran invertirse en cuanto a colores), sugiriendo que otros factores, como los recursos económicos, podrían ser más relevantes.
+
+    ```{python}
+    #| echo: false
+    #| fig-align: center
+    # Filtrar datos para el año 2022
+    anio = 2022
+
+    # Crear una figura con dos subgráficos lado a lado
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(8, 4))
+
+    # Mapa 1: Porcentaje de Analfabetismo
+    data_anio_alfabetismo = df_2[(df_2['Año'] == anio) & (df_2['Alfabetismo'].notna())]
+    totals_alfabetismo = data_anio_alfabetismo.groupby('Entidad').size()
+    percentages_1 = (data_anio_alfabetismo[data_anio_alfabetismo['Alfabetismo'] == 2].groupby('Entidad').size() / totals_alfabetismo) * 100
+    percentages_1 = percentages_1.fillna(0).reset_index()
+    percentages_1.columns = ['Entidad', 'Porcentaje_1']
+
+    mexico_data_sample_alfabetismo = mexico_map.merge(percentages_1, on='Entidad', how='left')
+    mexico_data_sample_alfabetismo = gpd.GeoDataFrame(mexico_data_sample_alfabetismo, geometry='geometry')
+
+    mexico_data_sample_alfabetismo.plot(
+        column='Porcentaje_1', 
+        cmap='viridis', 
+        legend=True, 
+        legend_kwds={'orientation': "horizontal"}, 
+        missing_kwds={"color": "lightgrey"}, 
+        ax=ax1
+    )
+    ax1.set_title(f"Analfabetismo - Año {anio}")
+    ax1.set_axis_off()
+
+    # Mapa 2: Porcentaje de Tomadores Frecuentes
+    data_anio_alcoholismo = df_1[(df_1['Año'] == anio) & (df_1['Frecuencia emborrachar'].notna())]
+    totals_alcoholismo = data_anio_alcoholismo.groupby('Entidad').size()
+    percentages_2 = (data_anio_alcoholismo[(data_anio_alcoholismo['Frecuencia emborrachar'] == '1') |
+                                           (data_anio_alcoholismo['Frecuencia emborrachar'] == '2')].groupby('Entidad').size() / totals_alcoholismo) * 100
+    percentages_2 = percentages_2.fillna(0).reset_index()
+    percentages_2.columns = ['Entidad', 'Porcentaje_1']
+
+    mexico_data_sample_alcoholismo = mexico_map.merge(percentages_2, on='Entidad', how='left')
+    mexico_data_sample_alcoholismo = gpd.GeoDataFrame(mexico_data_sample_alcoholismo, geometry='geometry')
+
+    mexico_data_sample_alcoholismo.plot(
+        column='Porcentaje_1', 
+        cmap='viridis', 
+        legend=True, 
+        legend_kwds={'orientation': "horizontal"}, 
+        missing_kwds={"color": "lightgrey"}, 
+        ax=ax2
+    )
+    ax2.set_title(f"Tomadores al menos Semanales - Año {anio}")
+    ax2.set_axis_off()
+
+    # Ajustar diseño
+    plt.tight_layout()
+    plt.show()
+
+    ```
+
+3.  **Diferencias generacionales en alfabetización:**\
+    Aquí, los datos respaldaron el supuesto. Las generaciones Greatest y Silent tienen los porcentajes más bajos de alfabetización, mientras que las generaciones Z y Milenial presentan niveles más altos. Esto sugiere que el acceso a la educación ha mejorado significativamente en las últimas décadas.
+
+    ```{python}
+    #| echo: false
+    #| fig-align: center
+    # Descripciones de las categorías
+    category_descriptions = {
+        '1': "Alfabeta",
+        '2': "No alfabeta",
+    }
+
+    # Crear una tabla cruzada para las frecuencias
+    cross_tab = pd.crosstab(df_2['Generacion'], df_2['Alfabetismo'])
+
+    # Convertir las frecuencias absolutas a porcentajes por fila (por generación)
+    cross_tab_percentage = cross_tab.div(cross_tab.sum(axis=1), axis=0) * 100
+
+    # Generar colores bien diferenciados de la paleta Viridis
+    viridis_colors = [mcolors.rgb2hex(cm.viridis(i / len(cross_tab_percentage.columns))) for i in range(len(cross_tab_percentage.columns))]
+
+    # Crear la figura en Plotly
+    fig = go.Figure()
+
+    # Dibujar una barra para cada categoría de Alfabetización en porcentajes
+    for i, col in enumerate(cross_tab_percentage.columns):
+        hover_text = [
+            f"Generación: {gen}<br>"
+            f"Categoría: {col} ({category_descriptions.get(str(col), 'Descripción no disponible')})<br>"
+            f"Porcentaje: {val:.2f}%"
+            for gen, val in zip(cross_tab_percentage.index, cross_tab_percentage[col])
+        ]
+        fig.add_trace(
+            go.Bar(
+                x=cross_tab_percentage.index,  # Generaciones
+                y=cross_tab_percentage[col],  # Porcentajes
+                name=f"Categoría {col}",  # Etiqueta para la categoría
+                marker_color=viridis_colors[i],  # Asignar color de Viridis
+                hovertext=hover_text,  # Texto al pasar el cursor
+                hoverinfo="text"  # Mostrar solo el texto proporcionado
+            )
+        )
+
+    # Configurar el diseño general
+    fig.update_layout(
+        width=750,  # Ancho en píxeles
+        height=400,  # Alto en píxeles
+        title={
+            "text": "Distribución Porcentual de Alfabetización por Generación<br><sup>Análisis de Respuestas</sup>",
+            "x": 0.5,  # Centrar título
+            "xanchor": "center",
+            "yanchor": "top"
+        },
+        xaxis_title="Generación",
+        yaxis_title="Porcentaje (%)",
+        barmode="group",  # Barras agrupadas
+        legend_title="Categorías de Alfabetización",
+        template="plotly_white",  # Tema blanco
+        xaxis=dict(tickangle=45, showgrid=False),  # Rotar etiquetas en el eje X
+        yaxis=dict(showgrid=False),
+    )
+
+
+    # Mostrar la gráfica
+    fig.show()
+    ```
+
+## Conclusiones
+
+-   La disposición a hablar de salud mental no siempre sigue patrones generacionales esperados. Las generaciones mayores pueden ser más abiertas al respecto de lo que se pensaba.
+
+-   Los hábitos de alcoholismo y tabaquismo no parecen ser un factor determinante en la alfabetización, pero destacan áreas de interés para estudios futuros.
+
+-   Las diferencias en alfabetización entre generaciones reflejan el progreso en acceso a la educación, pero también destacan la necesidad de atender las brechas existentes en generaciones mayores.
+
+Este análisis demuestra que la relación entre salud mental y educación es más compleja de lo que los supuestos iniciales sugerían. Si bien la alfabetización ha mejorado con el tiempo, persisten desafíos en la salud mental, especialmente entre los jóvenes. Este dashboard busca no solo informar, sino también sensibilizar a los tomadores de decisiones y al público general sobre la importancia de tratar estos temas de forma conjunta. Al abordar estas problemáticas, se pueden diseñar políticas y programas más inclusivos y efectivos para mejorar tanto la salud mental como la educación en México.

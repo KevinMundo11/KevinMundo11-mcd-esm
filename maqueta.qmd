@@ -1,0 +1,22 @@
+---
+title: "Propuesta"
+jupyter: python3
+---
+
+En esta sección se ilustrara un vistazo al dashboard creado.
+
+El dashboard cuenta con un sidebar en el que se puede navegar segun el tema.
+
+![](images/clipboard-98771589.png){fig-align="center"}
+
+Cuenta con graficas interactivas que muestran informacion importante para responder a la pregunta de interes.
+
+![](images/clipboard-4265090788.png){fig-align="center" width="448"}
+
+Así como con mapas que ilustran y contrastan la situación que se tiene en distintos de los estados de la República Mexicana por año en que se realizó la encuesta.
+
+![](images/clipboard-677093950.png){fig-align="center" width="444"}
+
+Por ultimo, una sección de disclaimer que nos menciona las limitaciones de los gráficos y los datos.
+
+![](images/clipboard-3865170602.png){fig-align="center" width="458"}

@@ -1,0 +1,92 @@
+---
+title: "Definición de Métricas"
+jupyter: python3
+---
+
+## Métricas principales (contextuales)
+
+### **Alfabetización por generación**
+
+-   **Definición:** Porcentaje de personas alfabetas dentro de cada generación.
+
+-   **Fórmula:**
+
+    $$\text{Porcentaje} = \frac{\text{Total de personas NO alfabetas}}{\text{Total de personas encuestadas}} \times 100$$
+
+-   **Fuente:** ENIGH 2018, 2020, 2022.
+
+-   **Importancia:** Responde directamente a la hipótesis sobre alfabetización por edad.
+
+### **Tristeza , depresión o intento de suicidio por generación**
+
+-   **Definición:** Porcentaje de personas que reportaron sentirse tristes o deprimidas durante 4 o mas dias a la semana y porcentaje de personas que en algún momento de su vida se hicieron daño con el fin de terminar con su vida, dividido por generación.
+
+-   **Fórmula:** Según sea el caso,
+
+    $$\text{Porcentaje} = \frac{\text{Total de personas con caso positivo}}{\text{Total de personas encuestadas}} \times 100$$
+
+-   **Fuente:** ENSANUT 2018, 2020, 2022.
+
+-   **Importancia:** Responde a la hipótesis sobre disposición generacional para hablar de salud mental.
+
+### **Consumo de alcohol por generación**
+
+-   **Definición:** Porcentaje de personas que consumen alcohol al menos una vez a la semana, dividido por generación.
+
+-   **Fórmula:**
+
+    $$\text{Porcentaje} = \frac{\text{Total de personas con consumo de alcohol semanal }}{\text{Total de personas encuestadas}} \times 100$$
+
+-   **Fuente:** ENSANUT 2018, 2020, 2022.
+
+-   **Rol:** Complementa el análisis sobre hábitos y alfabetización.
+
+### **Paleta de colores**
+
+La paleta de colores usada es **Viridis,** una escala de colores continua y perceptualmente uniforme diseñada para visualizaciones de datos.
+
+**Rango de Colores:**
+
+La paleta Viridis incluye una transición suave de:
+
+-   **Negro/Azul oscuro** para valores bajos.
+
+-   **Verde/Verde brillante** para valores intermedios.
+
+-   **Amarillo brillante** para valores altos.
+
+**Para nuestras gráficas:**
+
+1.  **Mapas Coropléticos:**
+
+    -   Los colores oscuros indican valores bajos y los claros indican valores altos, permitiendo una interpretación intuitiva de las regiones más y menos afectadas.
+
+2.  **Gráficas de Barras Agrupadas:**
+
+    -   La variedad de colores dentro de Viridis proporciona suficiente distinción entre categorías, mientras mantiene una cohesión visual.
+
+```{python}
+#| echo: false
+#| fig-align: center
+#| warning: false
+import matplotlib.pyplot as plt
+import matplotlib.cm as cm
+import numpy as np
+
+# Crear una matriz para representar la escala
+data = np.linspace(0, 1, 256).reshape(1, -1)
+
+# Crear la figura
+fig, ax = plt.subplots(figsize=(6, 1))
+
+# Mostrar la tira de color
+cmap = cm.get_cmap('viridis')
+ax.imshow(data, aspect='auto', cmap=cmap)
+
+# Quitar los ejes
+ax.axis('off')
+ax.set_title("Escala de Colores Viridis", fontsize=12)
+# Mostrar la figura
+plt.tight_layout()
+plt.show()
+```
